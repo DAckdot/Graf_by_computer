@@ -5,6 +5,8 @@ from tkinter import messagebox
 import math
 import numpy as np
 
+PIXEL_SIZE = 10
+
 def flood_fill_puntos(canvas, x, y, color_reemplazo, color_borde1="#dddfef", color_borde2="black"):
     # Implementa el algoritmo de relleno por difusión (flood fill) para pintar un área delimitada por
     # un color de borde en un objeto canvas. La función toma como entrada un objeto canvas, las
@@ -32,10 +34,12 @@ def flood_fill_puntos(canvas, x, y, color_reemplazo, color_borde1="#dddfef", col
             continue
 
         visitados.add((x, y))
+        # Pinta el rectángulo actual
         canvas.create_rectangle(x-5, y-5, x+5, y+5, outline=color_reemplazo, fill=color_reemplazo)
-
+        # Recorre los vecinos del punto actual
         for dx, dy in [(-5, 0), (5, 0), (0, -5), (0, 5)]:
             nx, ny = x+dx, y+dy
+            # Verifica si el vecino no es un borde y no ha sido visitado ni agregado a la pila
             if (nx, ny) not in visitados and canvas.obtener_color_pixel(nx, ny) not in [color_borde1, color_borde2]:
                 pila.append((nx, ny))
 
@@ -43,18 +47,17 @@ def flood_fill_puntos(canvas, x, y, color_reemplazo, color_borde1="#dddfef", col
 
 
 def bresenham(x1, y1, x2, y2, line_style='dashed'):
-    
-    # Implementa el algoritmo de Bresenham para trazar una línea entre dos puntos en un espacio discreto
-    # de coordenadas. La función toma como entrada las coordenadas de los puntos inicial y final, y un
-    # estilo de línea opcional (línea continua o discontinua).
-
-    # :param x1: Coordenada x del punto inicial.
-    # :param y1: Coordenada y del punto inicial.
-    # :param x2: Coordenada x del punto final.
-    # :param y2: Coordenada y del punto final.
-    # :param line_style: Estilo de línea, 'dashed' para línea discontinua o cualquier otro valor para línea continua.
-    # :return: Lista de puntos que forman la línea trazada.
-    
+    """
+    Implementa el algoritmo de Bresenham para trazar una línea entre dos puntos en un espacio discreto de coordenadas.
+    La función toma como entrada las coordenadas de los puntos inicial y final, y un estilo de línea opcional
+    (línea continua o discontinua).
+    :param x1: Coordenada x del punto inicial.
+    :param y1: Coordenada y del punto inicial.
+    :param x2: Coordenada x del punto final.
+    :param y2: Coordenada y del punto final.
+    :param line_style: Estilo de línea, 'dashed' para línea discontinua o cualquier otro valor para línea continua.
+    :return: Lista de puntos que forman la línea trazada.
+    """
     dx = abs(x2 - x1)
     dy = abs(y2 - y1)
     sx = 10 if x1 < x2 else -10
@@ -75,44 +78,62 @@ def bresenham(x1, y1, x2, y2, line_style='dashed'):
             break
 
         e2 = 2 * err
-        # Mueve el punto en el eje x
         if e2 > -dy:
             err -= dy
             x += sx
-        # Mueve el punto en el eje y
         if e2 < dx:
             err += dx
             y += sy
 
-        # Cambia el color para simular una línea discontinua
         if line_style == 'dashed':
             current_length += 1
-            if current_length % 4 == 1 or current_length % 4 == 2 or current_length % 4 == 3:
+            if current_length % 4 in (1, 2, 3):
                 current_color = "black"
             else:
                 current_color = "#dddfef"
 
     return puntos
-
 # !
 def line(x1, y1, x2, y2, color='black', segment_length=1, line_style='solid'):
-    puntos = []
-    square_size = 10
+    """
+    Returns a list of points that represent a line segment drawn from (x1, y1) to (x2, y2) with the specified color,
+    segment length, and line style.
 
+    :param x1: The x-coordinate of the starting point.
+    :param y1: The y-coordinate of the starting point.
+    :param x2: The x-coordinate of the ending point.
+    :param y2: The y-coordinate of the ending point.
+    :param color: The color of the line (default is black).
+    :param segment_length: The length of each segment in a dashed line (default is 1).
+    :param line_style: The style of the line (solid or dashed, default is solid).
+    :return: A list of tuples representing the (x, y, color) coordinates of each point in the line.
+    """
+
+    # Define a helper function to round a value to the nearest multiple of `square_size`
+    def round_to_square_size(val, square_size=10):
+        return (val // square_size) * square_size + square_size // 2
+
+    # Convert coordinates to integers
     x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
 
+    # Calculate the coefficients of the line equation
     a = y2 - y1
     b = x1 - x2
     c = x2*y1 - x1*y2
 
+    # Initialize variables
+    puntos = []
+    square_size = 10
+    current_length = 0
+    current_color = color
+
+    # Determine the direction of the line
     if abs(b) > abs(a):
+        # Line is more horizontal than vertical
         if x2 < x1:
             x1, x2 = x2, x1
-        current_length = 0
-        current_color = color
         for x in range(x1, x2+1, square_size):
-            y = round((-a*x - c) / b)
-            y = (y // square_size) * square_size + square_size // 2
+            y = round_to_square_size((-a*x - c) / b)
             if line_style == 'dashed':
                 if current_length == 0:
                     current_color = color if current_color != color else 'white'
@@ -121,17 +142,14 @@ def line(x1, y1, x2, y2, color='black', segment_length=1, line_style='solid'):
                     current_length -= 1
             puntos.append((x, y, current_color))
         if x2 % square_size != 0:
-            y = round((-a*x2 - c) / b)
-            y = (y // square_size) * square_size + square_size // 2
+            y = round_to_square_size((-a*x2 - c) / b)
             puntos.append((x2, y, current_color))
     else:
+        # Line is more vertical than horizontal
         if y2 < y1:
             y1, y2 = y2, y1
-        current_length = 0
-        current_color = color
         for y in range(y1, y2+1, square_size):
-            x = round((-b*y - c) / a)
-            x = (x // square_size) * square_size + square_size // 2
+            x = round_to_square_size((-b*y - c) / a)
             if line_style == 'dashed':
                 if current_length == 0:
                     current_color = color if current_color != color else 'white'
@@ -140,66 +158,71 @@ def line(x1, y1, x2, y2, color='black', segment_length=1, line_style='solid'):
                     current_length -= 1
             puntos.append((x, y, current_color))
         if y2 % square_size != 0:
-            x = round((-b*y2 - c) / a)
-            x = (x // square_size) * square_size + square_size // 2
+            x = round_to_square_size((-b*y2 - c) / a)
             puntos.append((x, y2, current_color))
 
     return puntos
+
 # !
-# !
-def punto_medio(x0, y0, radio):
-    radio_en_pixeles = math.ceil(radio / 10)
+
+def midpoint(x, y, radius):
+    radius_in_pixels = math.ceil(radius / PIXEL_SIZE)
+    x0 = x * PIXEL_SIZE
+    y0 = y * PIXEL_SIZE
     x = 0
-    y = radio_en_pixeles
-    d = 1 - radio_en_pixeles
-    puntos = []
+    y = radius_in_pixels
+    d = 1 - radius_in_pixels
+    points = []
     while x <= y:
-        puntos.append((x0 + x * 10, y0 + y * 10))
-        puntos.append((x0 + y * 10, y0 + x * 10))
-        puntos.append((x0 - y * 10, y0 + x * 10))
-        puntos.append((x0 - x * 10, y0 + y * 10))
-        puntos.append((x0 - x * 10, y0 - y * 10))
-        puntos.append((x0 - y * 10, y0 - x * 10))
-        puntos.append((x0 + y * 10, y0 - x * 10))
-        puntos.append((x0 + x * 10, y0 - y * 10))
+        points.extend(_get_octant_points(x0, y0, x, y))
         if d < 0:
             d += 2 * x + 3
         else:
             d += 2 * (x - y) + 5
             y -= 1
         x += 1
-    return puntos
-# !
-def area(x1, y1, x2, y2, x3, y3):
+    return points
+
+def _get_octant_points(x0, y0, x, y):
+    octant_points = [
+        (x0 + x * PIXEL_SIZE, y0 + y * PIXEL_SIZE),
+        (x0 + y * PIXEL_SIZE, y0 + x * PIXEL_SIZE),
+        (x0 - y * PIXEL_SIZE, y0 + x * PIXEL_SIZE),
+        (x0 - x * PIXEL_SIZE, y0 + y * PIXEL_SIZE),
+        (x0 - x * PIXEL_SIZE, y0 - y * PIXEL_SIZE),
+        (x0 - y * PIXEL_SIZE, y0 - x * PIXEL_SIZE),
+        (x0 + y * PIXEL_SIZE, y0 - x * PIXEL_SIZE),
+        (x0 + x * PIXEL_SIZE, y0 - y * PIXEL_SIZE),
+    ]
+    return octant_points
+
+def triangle_area(x1, y1, x2, y2, x3, y3):
     return abs((x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)) / 2.0)
 
 class Figura:
-    # Clase base para representar figuras geométricas en un espacio bidimensional. Esta clase contiene
-    # atributos comunes a todas las figuras, como coordenadas, color, grosor, tipo de línea, escala y rotación.
-
-    # :param x: Coordenada x de la figura.
-    # :param y: Coordenada y de la figura.
-    # :param color: Color de la figura.
-    # :param grosor: Grosor del borde de la figura.
-    # :param tipo_linea: Tipo de línea para el borde de la figura ('solid' u otros).
-    
-    def __init__(self, x, y, color='White', grosor=10, tipo_linea='solid'):
+    def __init__(self, x, y, color='White', grosor=10, tipo_de_linea='solid'):
         self.x = x
         self.y = y
         self.color = color
         self.grosor = grosor
-        self.tipo_linea = tipo_linea
+        self.tipo_de_linea = tipo_de_linea
         self.escala = 1
         self.borde_seleccionado = False
         self.rotacion = 0
 
     def set_rotacion(self, angulo):
         # Establece la rotación de la figura en grados.
-        self.rotacion = angulo % 360
+        if isinstance(angulo, (int, float)):
+            self.rotacion = angulo % 360
+        else:
+            raise TypeError('El ángulo debe ser un número.')
 
     def escalar(self, factor):
         # Establece el factor de escala de la figura.
-        self.escala = factor
+        if isinstance(factor, (int, float)):
+            self.escala = factor
+        else:
+            raise TypeError('El factor de escala debe ser un número.')
 
     def get_escala(self):
         # Obtiene el factor de escala de la figura.
@@ -211,7 +234,10 @@ class Figura:
 
     def rotar(self, rotacion):
         # Rota la figura en grados.
-        self.rotacion = rotacion
+        if isinstance(rotacion, (int, float)):
+            self.rotacion = rotacion % 360
+        else:
+            raise TypeError('La rotación debe ser un número.')
 
     def cambiar_color(self, color):
         # Cambia el color de la figura.
@@ -222,12 +248,8 @@ class Figura:
         self.x += dx
         self.y += dy
 
-    def imprimir_atributos(self):
-        # Imprime los atributos de la figura.
-        pass
-
-    def colorear(self, canvas):
-        # Método para colorear la figura en un objeto canvas.
+    def dibujar_en_canvas(self, canvas):
+        # Método para dibujar la figura en un objeto canvas.
         pass
       
 class Cuadrado(Figura):
@@ -287,89 +309,111 @@ class Cuadrado(Figura):
         return intersecciones % 2 == 1
     
     def coordenadas_escaladas(self):
-        # """
-        # Calcula y devuelve las coordenadas escaladas de la figura en función del factor de escala.
-        # La función escala la figura alrededor del punto superior izquierdo, es decir, el punto con la
-        # coordenada x más pequeña y la coordenada y más pequeña.
+        """
+        Devuelve las coordenadas escaladas de la figura en función del factor de escala.
 
-        # :return: Las 8 coordenadas escaladas de la figura.
-        # """
-        x1, y1, x2, y2, x3, y3, x4, y4 = self.x1, self.y1, self.x2, self.y2, self.x3, self.y3, self.x4, self.y4
+        La función escala la figura alrededor del punto superior izquierdo, es decir, el punto con la coordenada x más
+        pequeña y la coordenada y más pequeña.
 
-        # Identifica el punto superior izquierdo (el que tiene la coordenada x más pequeña y la coordenada y más pequeña)
-        puntos = np.array([[x1, y1], [x2, y2], [x3, y3], [x4, y4]])
-        punto_superior_izquierdo = np.argmin(puntos, axis=0)[0]
+        :return: Las 8 coordenadas escaladas de la figura.
+        """
+        # Obtiene las coordenadas de los puntos
+        x1, y1 = self.x1, self.y1
+        x2, y2 = self.x2, self.y2
+        x3, y3 = self.x3, self.y3
+        x4, y4 = self.x4, self.y4
 
-        # Calcula la matriz de escalado
+        # Obtiene el punto superior izquierdo
+        punto_superior_izquierdo = self.obtener_punto_superior_izquierdo()
+
+        # Obtiene la matriz de escalado
         escala_matriz = np.array([[self.escala, 0], [0, self.escala]])
 
-        # Escala las coordenadas
-        puntos_escalados = puntos - puntos[punto_superior_izquierdo]  # Resta el punto superior izquierdo
-        puntos_escalados = np.dot(puntos_escalados, escala_matriz)    # Multiplica por la matriz de escalado
-        puntos_escalados = puntos_escalados + puntos[punto_superior_izquierdo]  # Suma el punto superior izquierdo
-
-        # Redondea las coordenadas escaladas
-        puntos_escalados = np.round(puntos_escalados / 10) * 10
-
-        # Devuelve las 8 coordenadas escaladas
-        x1_escalado, y1_escalado = puntos_escalados[0]
-        x2_escalado, y2_escalado = puntos_escalados[1]
-        x3_escalado, y3_escalado = puntos_escalados[2]
-        x4_escalado, y4_escalado = puntos_escalados[3]
-        return x1_escalado, y1_escalado, x2_escalado, y2_escalado, x3_escalado, y3_escalado, x4_escalado, y4_escalado
-    
-    def puntos_rotados(self, x1, y1, x2, y2, x3, y3, x4, y4):
-        # """
-        # Calcula y devuelve las coordenadas de los puntos de la figura después de aplicar la rotación.
-        # La función rota la figura alrededor de su centro. El centro se calcula como el punto medio
-        # entre las coordenadas (x1, y1) y (x3, y3).
-
-        # :return: Las 8 coordenadas de los puntos rotados.
-        # """
+        # Escala las coordenadas y redondea
         puntos = np.array([[x1, y1], [x2, y2], [x3, y3], [x4, y4]])
+        puntos_escalados = np.round(np.dot(puntos - punto_superior_izquierdo, escala_matriz) + punto_superior_izquierdo, -1)
 
-        # Calcula el centro de la figura
-        centro_x = (x1 + x3) / 2
-        centro_y = (y1 + y3) / 2
+        # Retorna las 8 coordenadas escaladas
+        return tuple(coord for punto in puntos_escalados for coord in punto)
+    
+    def obtener_punto_superior_izquierdo(self):
+        """
+        Obtiene el punto superior izquierdo de la figura, es decir, el punto con la coordenada x más pequeña y la coordenada
+        y más pequeña.
 
-        # Calcula el ángulo de rotación en radianes
-        rad = math.radians(self.rotacion)
-        cos_rad = math.cos(rad)
-        sin_rad = math.sin(rad)
+        :return: El punto superior izquierdo.
+        """
+        # Obtiene las coordenadas de los puntos
+        x1, y1 = self.x1, self.y1
+        x2, y2 = self.x2, self.y2
+        x3, y3 = self.x3, self.y3
+        x4, y4 = self.x4, self.y4
 
-        # Crea la matriz de rotación
-        rotacion_matriz = np.array([[cos_rad, sin_rad], [-sin_rad, cos_rad]])
+        # Obtiene el punto superior izquierdo
+        puntos = np.array([[x1, y1], [x2, y2], [x3, y3], [x4, y4]])
+        return puntos[np.argmin(puntos, axis=0)[0]]
+    
+    def puntos_rotados_cuadrado(self, x1, y1, x2, y2, x3, y3, x4, y4):
+        """
+        Returns the coordinates of the points of the figure after applying rotation.
+        The function rotates the figure around its center. The center is calculated as the midpoint
+        between the coordinates (x1, y1) and (x3, y3).
 
-        # Aplica la rotación a los puntos
-        puntos_rotados = puntos - np.array([centro_x, centro_y])  # Resta el centro de la figura
-        puntos_rotados = np.dot(puntos_rotados, rotacion_matriz)  # Multiplica por la matriz de rotación
-        puntos_rotados = puntos_rotados + np.array([centro_x, centro_y])  # Suma el centro de la figura
+        :param x1: x-coordinate of the first point
+        :param y1: y-coordinate of the first point
+        :param x2: x-coordinate of the second point
+        :param y2: y-coordinate of the second point
+        :param x3: x-coordinate of the third point
+        :param y3: y-coordinate of the third point
+        :param x4: x-coordinate of the fourth point
+        :param y4: y-coordinate of the fourth point
+        :return: The 8 coordinates of the rotated points.
+        """
+        points = np.array([[x1, y1], [x2, y2], [x3, y3], [x4, y4]])
 
-        # Redondea las coordenadas de los puntos rotados
-        puntos_rotados = np.round(puntos_rotados / 10) * 10
+        # Calculate the center of the figure
+        center_x = (x1 + x3) / 2
+        center_y = (y1 + y3) / 2
 
-        x1_rotado, y1_rotado = puntos_rotados[0]
-        x2_rotado, y2_rotado = puntos_rotados[1]
-        x3_rotado, y3_rotado = puntos_rotados[2]
-        x4_rotado, y4_rotado = puntos_rotados[3]
+        # Calculate the angle of rotation in radians
+        radians = math.radians(self.rotation)
+        cos_radians = math.cos(radians)
+        sin_radians = math.sin(radians)
 
-        return x1_rotado, y1_rotado, x2_rotado, y2_rotado, x3_rotado, y3_rotado, x4_rotado, y4_rotado
-   
+        # Create the rotation matrix
+        rotation_matrix = np.array([[cos_radians, sin_radians], [-sin_radians, cos_radians]])
+
+        # Apply rotation to the points
+        points_rotated = points - np.array([center_x, center_y])  # Subtract the center of the figure
+        points_rotated = np.dot(points_rotated, rotation_matrix)  # Multiply by the rotation matrix
+        points_rotated = points_rotated + np.array([center_x, center_y])  # Add the center of the figure
+
+        # Round the coordinates of the rotated points
+        points_rotated = np.round(points_rotated / 10) * 10
+
+        # Return the 8 rotated coordinates
+        x1_rotated, y1_rotated = points_rotated[0]
+        x2_rotated, y2_rotated = points_rotated[1]
+        x3_rotated, y3_rotated = points_rotated[2]
+        x4_rotated, y4_rotated = points_rotated[3]
+
+        return x1_rotated, y1_rotated, x2_rotated, y2_rotated, x3_rotated, y3_rotated, x4_rotated, y4_rotated
+
     def colorear(self, canvas):
-        # """
-        # Colorea el cuadrado en el objeto canvas proporcionado. Este método escala y rota el cuadrado
-        # antes de colorearlo utilizando el algoritmo flood fill, que rellena el área delimitada por los
-        # bordes del cuadrado con el color especificado.
+        """
+        Colorea el cuadrado en el objeto canvas proporcionado. Este método escala y rota el cuadrado
+        antes de colorearlo utilizando el algoritmo flood fill, que rellena el área delimitada por los
+        bordes del cuadrado con el color especificado.
 
-        # :param canvas: Objeto canvas donde se dibujará el cuadrado.
-        # """
-        # Calcula las coordenadas escaladas y rotadas del cuadrado
-        x1_escalado, y1_escalado, x2_escalado, y2_escalado, x3_escalado, y3_escalado, x4_escalado, y4_escalado = self.coordenadas_escaladas()
-        x1_rotado, y1_rotado, x2_rotado, y2_rotado, x3_rotado, y3_rotado, x4_rotado, y4_rotado = self.puntos_rotados(x1_escalado, y1_escalado, x2_escalado, y2_escalado, x3_escalado, y3_escalado, x4_escalado, y4_escalado)
+        :param canvas: Objeto canvas donde se dibujará el cuadrado.
+        """
+        # Obtiene las coordenadas escaladas y rotadas del cuadrado
+        vertices = self.coordenadas_escaladas()
+        vertices_rotados = self.puntos_rotados_cuadrado(*vertices)
 
         # Calcula el centro del cuadrado rotado y escalado
-        centro_x = (x1_rotado + x3_rotado) / 2
-        centro_y = (y1_rotado + y3_rotado) / 2
+        centro_x = (vertices_rotados[0] + vertices_rotados[2]) / 2
+        centro_y = (vertices_rotados[1] + vertices_rotados[3]) / 2
 
         # Redondea las coordenadas del centro a múltiplos de 5
         semilla_x = round(centro_x / 10) * 10
@@ -377,6 +421,7 @@ class Cuadrado(Figura):
 
         # Realiza el relleno utilizando las coordenadas de la semilla
         flood_fill_puntos(canvas, semilla_x, semilla_y, self.color)
+
 
     def trasladar(self, dx, dy):
         self.x1 += dx
@@ -440,7 +485,7 @@ class Triangulo(Figura):
         x3_escalado, y3_escalado = puntos_escalados[2]
         return x1_escalado, y1_escalado, x2_escalado, y2_escalado, x3_escalado, y3_escalado
 
-    def puntos_rotados(self, x1, y1, x2, y2, x3, y3):
+    def puntos_rotados_triangulo(self, x1, y1, x2, y2, x3, y3):
         # """
         # Rota los puntos del triángulo alrededor de su centroide según el ángulo de rotación.
 
@@ -479,20 +524,21 @@ class Triangulo(Figura):
 
         return x1_rotado, y1_rotado, x2_rotado, y2_rotado, x3_rotado, y3_rotado
 
-
     def punto_medio_triangulo(x1, y1, x2, y2, x3, y3):
         x_medio = (x1 + x2 + x3) / 3
         y_medio = (y1 + y2 + y3) / 3
         return x_medio, y_medio   
+
     def colisiona_con_punto(self, x, y):
         x1_escalado, y1_escalado, x2_escalado, y2_escalado, x3_escalado, y3_escalado = self.coordenadas_escaladas()
-        x1_rotado, y1_rotado, x2_rotado, y2_rotado, x3_rotado, y3_rotado = self.puntos_rotados(x1_escalado, y1_escalado, x2_escalado, y2_escalado, x3_escalado, y3_escalado)
+        puntos_rotados = self.puntos_rotados_triangulo(x1_escalado, y1_escalado, x2_escalado, y2_escalado, x3_escalado, y3_escalado)
 
-        area_total = area(x1_rotado, y1_rotado, x2_rotado, y2_rotado, x3_rotado, y3_rotado)
-        area1 = area(x, y, x2_rotado, y2_rotado, x3_rotado, y3_rotado)
-        area2 = area(x1_rotado, y1_rotado, x, y, x3_rotado, y3_rotado)
-        area3 = area(x1_rotado, y1_rotado, x2_rotado, y2_rotado, x, y)
+        area_total = triangle_area(*puntos_rotados)
+        area1 = triangle_area(x, y, *puntos_rotados[2:])
+        area2 = triangle_area(*puntos_rotados[:2], x, y, *puntos_rotados[4:])
+        area3 = triangle_area(*puntos_rotados[:4], x, y)
         return abs(area_total - (area1 + area2 + area3)) < 0.1
+
     def trasladar(self, dx, dy):
         self.x1 += dx
         self.y1 += dy
@@ -500,12 +546,15 @@ class Triangulo(Figura):
         self.y2 += dy
         self.x3 += dx
         self.y3 += dy
+
     def imprimir_atributos(self):
         super().imprimir_atributos()
+
     def colorear(self, canvas):
         x1_escalado, y1_escalado, x2_escalado, y2_escalado, x3_escalado, y3_escalado = self.coordenadas_escaladas()
-        semilla_x, semilla_y = Triangulo.punto_medio_triangulo(x1_escalado, y1_escalado, x2_escalado, y2_escalado, x3_escalado, y3_escalado)
-        flood_fill_puntos(canvas, round(semilla_x/10)*10, round(semilla_y/10)*10, self.color)#cambio
+        semilla_x, semilla_y = punto_medio_triangulo(x1_escalado, y1_escalado, x2_escalado, y2_escalado, x3_escalado, y3_escalado)
+        flood_fill_puntos(canvas, round(semilla_x/10)*10, round(semilla_y/10)*10, self.color)
+
 
 class Circunferencia(Figura):
     def __init__(self, x, y, radio, color='yellow', grosor=1, tipo_linea='solid'):
@@ -562,86 +611,58 @@ class FigurasCanvas(tk.Canvas):
         self.figura_actual = "cuadrado"
           
     def dibujar_figura(self, figura):
+        # Escala de la figura
         escala = figura.escala
+
         if isinstance(figura, Cuadrado):
-            # x1_escalado, y1_escalado, x2_escalado, y2_escalado, x3_escalado, y3_escalado, x4_escalado, y4_escalado = figura.coordenadas_escaladas()
-            # x1_rotado, y1_rotado, x2_rotado, y2_rotado, x3_rotado, y3_rotado, x4_rotado, y4_rotado = figura.puntos_rotados(x1_escalado, y1_escalado, x2_escalado, y2_escalado, x3_escalado, y3_escalado, x4_escalado, y4_escalado)
-
-            # # Dibuja las líneas del cuadrado con las coordenadas rotadas
-            # puntos_linea1 = bresenham(x1_rotado, y1_rotado, x2_rotado, y2_rotado)
-            # puntos_linea2 = bresenham(x2_rotado, y2_rotado, x3_rotado, y3_rotado)
-            # puntos_linea3 = bresenham(x3_rotado, y3_rotado, x4_rotado, y4_rotado)
-            # puntos_linea4 = bresenham(x4_rotado, y4_rotado, x1_rotado, y1_rotado)
-            # for punto in puntos_linea1 + puntos_linea2 + puntos_linea3 + puntos_linea4:
-            #     x, y = punto
-            #     self.create_rectangle(x, y, x+10, y+10, width=1, outline="Black", fill="Ghostwhite")
-            # figura.colorear(self)
-            #...................
+            # Obtener las coordenadas escaladas y rotadas
             x1_escalado, y1_escalado, x2_escalado, y2_escalado, x3_escalado, y3_escalado, x4_escalado, y4_escalado = figura.coordenadas_escaladas()
-            x1_rotado, y1_rotado, x2_rotado, y2_rotado, x3_rotado, y3_rotado, x4_rotado, y4_rotado = figura.puntos_rotados(x1_escalado, y1_escalado, x2_escalado, y2_escalado, x3_escalado, y3_escalado, x4_escalado, y4_escalado)
+            x1_rotado, y1_rotado, x2_rotado, y2_rotado, x3_rotado, y3_rotado, x4_rotado, y4_rotado = figura.puntos_rotados_cuadrado(x1_escalado, y1_escalado, x2_escalado, y2_escalado, x3_escalado, y3_escalado, x4_escalado, y4_escalado)
 
-            # Dibuja las líneas del cuadrado con las coordenadas rotadas
+            # Dibujar las líneas del cuadrado con las coordenadas rotadas
             puntos_linea1 = bresenham(x1_rotado, y1_rotado, x2_rotado, y2_rotado, line_style=figura.tipo_linea)
             puntos_linea2 = bresenham(x2_rotado, y2_rotado, x3_rotado, y3_rotado, line_style=figura.tipo_linea)
             puntos_linea3 = bresenham(x3_rotado, y3_rotado, x4_rotado, y4_rotado, line_style=figura.tipo_linea)
             puntos_linea4 = bresenham(x4_rotado, y4_rotado, x1_rotado, y1_rotado, line_style=figura.tipo_linea)
+
+            # Dibujar los puntos del cuadrado
             for punto in puntos_linea1 + puntos_linea2 + puntos_linea3 + puntos_linea4:
                 x, y, color = punto
                 self.create_rectangle(x, y, x+10, y+10, width=1, outline=color, fill=color)
+
+            # Colorear la figura
             figura.colorear(self)
+
         elif isinstance(figura, Circunferencia):
+            # Obtener el radio escalado
             radio  = (round(figura.radio * escala/10)*10)
-            puntos_circunferencia = punto_medio(figura.x, figura.y, radio)
+
+            # Calcular los puntos de la circunferencia usando el algoritmo del punto medio
+            puntos_circunferencia = midpoint(figura.x, figura.y, radio)
+
+            # Dibujar los puntos de la circunferencia
             for punto in puntos_circunferencia:
                 x, y = punto
                 self.create_rectangle(x, y, x+10, y+10, width=1,outline="Black",fill="black")
+
+            # Colorear la figura
             figura.colorear(self)
+
         elif isinstance(figura, Triangulo):
+            # Calcula las coordenadas escaladas y rotadas del triángulo
             x1_escalado, y1_escalado, x2_escalado, y2_escalado, x3_escalado, y3_escalado = figura.coordenadas_escaladas()
             x1_rotado, y1_rotado, x2_rotado, y2_rotado, x3_rotado, y3_rotado = figura.puntos_rotados(x1_escalado, y1_escalado, x2_escalado, y2_escalado, x3_escalado, y3_escalado)
-
             # Dibuja las líneas del triángulo con las coordenadas rotadas
             puntos_linea1 = bresenham(x1_rotado, y1_rotado, x2_rotado, y2_rotado, line_style=figura.tipo_linea)
             puntos_linea2 = bresenham(x2_rotado, y2_rotado, x3_rotado, y3_rotado, line_style=figura.tipo_linea)
             puntos_linea3 = bresenham(x3_rotado, y3_rotado, x1_rotado, y1_rotado, line_style=figura.tipo_linea)
+        
+            # Dibuja los rectángulos que componen las líneas del triángulo
             for punto in puntos_linea1 + puntos_linea2 + puntos_linea3:
                 x, y, color = punto
                 self.create_rectangle(x, y, x+10, y+10, width=1, outline=color, fill=color)
             figura.colorear(self)
-            
-            
-        # self.dibujar_segundo_borde(figura, "Black", 0)
 
-    
-    # def dibujar_segundo_borde(self, figura, color, grosor):
-    #     escala = figura.escala
-
-    #     if isinstance(figura, Cuadrado):
-    #         lado = (round(figura.lado * escala/10)*10)
-    #         puntos_linea1 = bresenham(figura.x, figura.y, figura.x + lado, figura.y)
-    #         puntos_linea2 = bresenham(figura.x, figura.y, figura.x, figura.y + lado)
-    #         puntos_linea3 = bresenham(figura.x + lado, figura.y, figura.x + lado, figura.y + lado)
-    #         puntos_linea4 = bresenham(figura.x, figura.y + lado, figura.x + lado, figura.y + lado)
-    #         for punto in puntos_linea1 + puntos_linea2 + puntos_linea3 + puntos_linea4:
-    #             x, y = punto
-    #             self.create_rectangle(x, y, x+10, y+10, width=grosor, outline=color, fill=color)
-            
-    #     elif isinstance(figura, Circunferencia):
-    #         radio  = (round(figura.radio * escala/10)*10)
-    #         puntos_circunferencia = punto_medio(figura.x, figura.y, radio)
-    #         for punto in puntos_circunferencia:
-    #             x, y = punto
-    #             self.create_rectangle(x, y, x+10, y+10, width=grosor, outline=color, fill=color)
-            
-        # elif isinstance(figura, Triangulo):
-        #     x1_escalado, y1_escalado, x2_escalado, y2_escalado, x3_escalado, y3_escalado = figura.coordenadas_escaladas()
-            
-        #     puntos_linea1 = bresenham(x1_escalado, y1_escalado, x2_escalado, y2_escalado)
-        #     puntos_linea2 = bresenham(x2_escalado, y2_escalado, x3_escalado, y3_escalado)
-        #     puntos_linea3 = bresenham(x3_escalado, y3_escalado, x1_escalado, y1_escalado)
-        #     for punto in puntos_linea1 + puntos_linea2 + puntos_linea3:
-        #         x, y = punto
-        #         self.create_rectangle(x, y, x+10, y+10, width=grosor, outline=color, fill=color)
     def get_pixel_color(self, x, y):
         items = self.find_overlapping(x, y, x, y)
         if items:
