@@ -7,7 +7,7 @@ import numpy as np
 
 PIXEL_SIZE = 10
 
-def flood_fill_puntos(canvas, x, y, color_reemplazo, color_borde1="#dddfef", color_borde2="black"):
+def flood_fill_puntos(canvas, x, y, color_reemplazo, color_borde1="#FCFDFF", color_borde2="black"):
     # Implementa el algoritmo de relleno por difusión (flood fill) para pintar un área delimitada por
     # un color de borde en un objeto canvas. La función toma como entrada un objeto canvas, las
     # coordenadas (x, y) del punto de inicio, el color de reemplazo para llenar el área y dos colores
@@ -92,7 +92,8 @@ def bresenham(x1, y1, x2, y2, line_style='dashed'):
             if current_length % 4 in (1, 2, 3):
                 current_color = "black"
             else:
-                current_color = "#dddfef"
+                #current_color = "#dddfef" ->se cambio para que este mas limpio con color blanco
+                current_color = "#FCFDFF"
 
     return puntos
 
@@ -165,7 +166,7 @@ class Figura:
     # :param grosor: Grosor del borde de la figura.
     # :param tipo_linea: Tipo de línea para el borde de la figura ('solid' u otros).
     
-    def __init__(self, x, y, color='White', grosor=10, tipo_linea='solid'):
+    def __init__(self, x, y, color='White', grosor=2, tipo_linea='solid'):
         self.x = x
         self.y = y
         self.color = color
@@ -191,7 +192,7 @@ class Figura:
         return self.grosor
     
     def set_border_thickness(self , factor):
-        self.grosor += factor
+        self.grosor = factor
     
     def get_rotacion(self):
         # Obtiene la rotación de la figura en grados.
@@ -635,6 +636,7 @@ class FigurasCanvas(tk.Canvas):
         # :param figura: Un objeto de la clase Figura (Cuadrado, Circunferencia o Triangulo).
         # """
         escala = figura.escala
+        grosor = figura.grosor
 
         if isinstance(figura, Cuadrado):
             # Calcula las coordenadas escaladas y rotadas del cuadrado
@@ -650,7 +652,7 @@ class FigurasCanvas(tk.Canvas):
             # Dibuja los rectángulos que componen las líneas del cuadrado
             for punto in puntos_linea1 + puntos_linea2 + puntos_linea3 + puntos_linea4:
                 x, y, color = punto
-                self.create_rectangle(x, y, x+10, y+10, width=1, outline=color, fill=color)
+                self.create_rectangle(x, y, x+10, y+10, width=grosor, outline=color, fill=color)
 
             figura.colorear(self)
 
@@ -664,7 +666,7 @@ class FigurasCanvas(tk.Canvas):
             # Dibuja los rectángulos que componen la circunferencia
             for punto in puntos_circunferencia:
                 x, y = punto
-                self.create_rectangle(x, y, x+10, y+10, width=1, outline="Black", fill="black")
+                self.create_rectangle(x, y, x+10, y+10, width= grosor, outline="Black", fill="black")
             
             figura.colorear(self)
             
@@ -681,7 +683,7 @@ class FigurasCanvas(tk.Canvas):
             # Dibuja los rectángulos que componen las líneas del triángulo
             for punto in puntos_linea1 + puntos_linea2 + puntos_linea3:
                 x, y, color = punto
-                self.create_rectangle(x, y, x+10, y+10, width=1, outline=color, fill=color)
+                self.create_rectangle(x, y, x+10, y+10, width=grosor, outline=color, fill=color)
             figura.colorear(self)
 
     def get_pixel_color(self, x, y):
@@ -940,15 +942,17 @@ class FigurasCanvas(tk.Canvas):
     
     def modificar_grosor_bordes(self, factor):
         """
-        Esta funcion recibe un factor para aumentar o reducir 
-        el tamaño de los bordes de la figura seleccionada 
+        Esta funcion recibe el valor de reemplazo para aumentar o reducir
+        el tamaño de los bordes de la figura seleccionada
         que puede ser circulo , cuadrado o triangulo
-        """    
-        if self.figura_seleccionada is not None:
-            self.figura_seleccionada.set_border_thickness(factor)
-            self.delete("all")  # Elimina todas las figuras en el canvas.
-            for figura in self.figuras:
-                self.dibujar_figura(figura)  # Vuelve a dibujar todas las figuras con la figura escalada.                                      
+        """
+        if factor >= 0 and factor <=20:
+            fig = self.figura_seleccionada    
+            if fig is not None:
+                fig.set_border_thickness(factor)
+                self.delete("all")  # Elimina todas las figuras en el canvas.
+                for figura in self.figuras:
+                    self.dibujar_figura(figura) #dibuja con la modificacion los bordes de la figuras
 
 class Aplicacion(tk.Tk):
     
@@ -972,7 +976,7 @@ class Aplicacion(tk.Tk):
         self.resizable(False, False)
 
         self.canvas = FigurasCanvas(self, width=1000, height=500)
-        self.canvas.configure(bg="#ffffff", highlightthickness=0)
+        self.canvas.configure(bg="white", highlightthickness=0)
         self.canvas.pack(side=tk.RIGHT)
 
         # Configuración de la sección de controles
@@ -1205,16 +1209,22 @@ class Aplicacion(tk.Tk):
         # Aumenta en un pixel el ancho de los bordes
         # luego lo borra y redibuja con el metodo modificar grosor bordes
         # """
-        if self.canvas.figura_seleccionada is not None:
-            self.canvas.modificar_grosor_bordes(1)
+        fig = self.canvas.figura_seleccionada
+        if fig is not None:
+            ancho_borde = fig.get_border_thickness()
+            ancho_borde += 2
+            self.canvas.modificar_grosor_bordes(ancho_borde)
 
     def disminuir_ancho_bordes(self):
         # """
         # Decremente en un pixel el ancho de los bordes
         # luego lo borra y redibuja con el metodo modificar grosor bordes
         # """
-        if self.canvas.figura_seleccionada is not None:
-            self.canvas.modificar_grosor_bordes(-1)
+        fig = self.canvas.figura_seleccionada
+        if fig is not None:
+            ancho_borde = fig.get_border_thickness()
+            ancho_borde -= 2
+            self.canvas.modificar_grosor_bordes(ancho_borde)
 
     def mover_arriba(self):
         # """
