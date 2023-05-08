@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import ttk
-from tkinter import colorchooser
 from tkinter import messagebox
 import math
 import numpy as np
@@ -45,44 +44,26 @@ def flood_fill_puntos(canvas, x, y, color_reemplazo, color_borde1="#FCFDFF", col
 
     return
 
-
 def bresenham(x1, y1, x2, y2, line_style='dashed'):
-    """
-    Implementa el algoritmo de Bresenham para trazar una línea entre dos puntos en un espacio discreto de coordenadas.
-    La función toma como entrada las coordenadas de los puntos inicial y final, y un estilo de línea opcional
-    (línea continua o discontinua).
-    :param x1: Coordenada x del punto inicial.
-    :param y1: Coordenada y del punto inicial.
-    :param x2: Coordenada x del punto final.
-    :param y2: Coordenada y del punto final.
-    :param line_style: Estilo de línea, 'dashed' para línea discontinua o cualquier otro valor para línea continua.
-    :return: Lista de puntos que forman la línea trazada.
-    """
     dx = abs(x2 - x1)
     dy = abs(y2 - y1)
     sx = 10 if x1 < x2 else -10
     sy = 10 if y1 < y2 else -10
     err = dx - dy
     x, y = x1, y1
-    puntos = []
-
-    segment_length = 1
+    puntos = []    
     current_length = 0
     current_color = "black"
 
     while True:
         color = current_color if line_style == 'dashed' else 'black'
         puntos.append((x, y, color))
-
         if x == x2 and y == y2:
             break
-
         e2 = 2 * err
-        # Mueve el punto en el eje x
         if e2 > -dy:
             err -= dy
             x += sx
-        # Mueve el punto en el eje y    
         if e2 < dx:
             err += dx
             y += sy
@@ -92,12 +73,50 @@ def bresenham(x1, y1, x2, y2, line_style='dashed'):
             if current_length % 4 in (1, 2, 3):
                 current_color = "black"
             else:
-                #current_color = "#dddfef" ->se cambio para que este mas limpio con color blanco
                 current_color = "#FCFDFF"
 
     return puntos
 
-# !
+def ecuacion_general(x1, y1, x2, y2, line_style='dashed'):
+    dx = abs(x2 - x1)
+    dy = abs(y2 - y1)
+    sx = 1 if x1 < x2 else -1
+    sy = 1 if y1 < y2 else -1
+    puntos = []
+    current_length = 0
+    current_color = "black"
+
+    m = (y2 - y1) / (x2 - x1) if x2 != x1 else None
+    b = y1 - m * x1 if m is not None else None
+
+    if dx > dy:
+        x = x1
+        while x != x2:
+            y = round(m * x + b)
+            color = current_color if line_style == 'dashed' else 'black'
+            puntos.append((x, y, color))
+            x += sx
+            if line_style == 'dashed':
+                current_length += 1
+                if current_length % 4 in (1, 2, 3):
+                    current_color = "black"
+                else:
+                    current_color = "#FCFDFF"
+    else:
+        y = y1
+        while y != y2:
+            x = round((y - b) / m) if m is not None else x1
+            color = current_color if line_style == 'dashed' else 'black'
+            puntos.append((x, y, color))
+            y += sy
+            if line_style == 'dashed':
+                current_length += 1
+                if current_length % 4 in (1, 2, 3):
+                    current_color = "black"
+                else:
+                    current_color = "#FCFDFF"
+
+    return puntos
 
 def midpoint(x, y, radius):
     radius_in_pixels = math.ceil(radius / PIXEL_SIZE)
@@ -116,6 +135,9 @@ def midpoint(x, y, radius):
             y -= 1
         x += 1
     return points
+
+
+
 
 def _get_octant_points(x0, y0, x, y):
     octant_points = [
@@ -155,17 +177,61 @@ def punto_medio(x0, y0, radio):
             y -= 1
         x += 1
     return puntos
+# def _get_octant_points(x0, y0, x, y):
+#     return [
+#         (x0 + x, y0 + y),
+#         (x0 - x, y0 + y),
+#         (x0 + x, y0 - y),
+#         (x0 - x, y0 - y),
+#         (x0 + y, y0 + x),
+#         (x0 - y, y0 + x),
+#         (x0 + y, y0 - x),
+#         (x0 - y, y0 - x)
+#     ]
+    
+# def interline_points(points, line_style='dashed'):
+#     new_points = []
+#     current_length = 0
+#     current_color = "black"
+
+#     for point in points:
+#         if line_style == 'dashed':
+#             current_length += 1
+#             if current_length % 4 in (1, 2, 3):
+#                 current_color = "black"
+#             else:
+#                 current_color = "#FCFDFF"
+#         new_points.append((point[0], point[1], current_color))
+
+#     return new_points
+
+# def punto_medio(x, y, radius, line_style='dashed'):
+#     radius_in_pixels = math.ceil(radius / PIXEL_SIZE)
+#     x0 = x * PIXEL_SIZE
+#     y0 = y * PIXEL_SIZE
+#     x = 0
+#     y = radius_in_pixels
+#     d = 1 - radius_in_pixels
+#     points = []
+
+#     while x <= y:
+#         octant_points = _get_octant_points(x0, y0, x, y)
+#         points.extend(octant_points)
+        
+#         if d < 0:
+#             d += 2 * x + 3
+#         else:
+#             d += 2 * (x - y) + 5
+#             y -= 1
+#         x += 1
+
+#     interlined_points = interline_points(points, line_style)
+#     return interlined_points  
+
+
+
 
 class Figura:
-    # Clase base para representar figuras geométricas en un espacio bidimensional. Esta clase contiene
-    # atributos comunes a todas las figuras, como coordenadas, color, grosor, tipo de línea, escala y rotación.
-
-    # :param x: Coordenada x de la figura.
-    # :param y: Coordenada y de la figura.
-    # :param color: Color de la figura.
-    # :param grosor: Grosor del borde de la figura.
-    # :param tipo_linea: Tipo de línea para el borde de la figura ('solid' u otros).
-    
     def __init__(self, x, y, color='White', grosor=2, tipo_linea='solid'):
         self.x = x
         self.y = y
@@ -177,48 +243,45 @@ class Figura:
         self.rotacion = 0
 
     def set_rotacion(self, angulo):
-        # Establece la rotación de la figura en grados.
+        #Establece la rotacion de la figura en grados
         self.rotacion = angulo % 360
 
     def escalar(self, factor):
-        # Establece el factor de escala de la figura.
-        self.escala = factor
+        #Establece el factor de escala de la figura
+        if factor>0 and factor < 2.5:
+            self.escala = factor
+        print("LA ESCALA ES DE", self.escala)
 
     def get_escala(self):
-        # Obtiene el factor de escala de la figura.
+        #Devuelve el factor de escala de la figura
         return self.escala
     
     def get_border_thickness(self):
+        # obtiene el grosor actual de los bordes de la figura
         return self.grosor
     
     def set_border_thickness(self , factor):
         self.grosor = factor
     
     def get_rotacion(self):
-        # Obtiene la rotación de la figura en grados.
         return self.rotacion
 
     def rotar(self, rotacion):
-        # Rota la figura en grados.
         self.rotacion = rotacion
 
     def cambiar_color(self, color):
-        # Cambia el color de la figura.
         self.color = color
 
     def trasladar(self, dx, dy):
-        # Traslada la figura en el eje x e y.
         self.x += dx
         self.y += dy
 
     def imprimir_atributos(self):
-        # Imprime los atributos de la figura.
         pass
 
     def colorear(self, canvas):
-        # Método para colorear la figura en un objeto canvas.
         pass
-      
+
 class Cuadrado(Figura):
     
     # Clase que representa un cuadrado en un espacio bidimensional. Hereda de la clase Figura.
@@ -276,26 +339,23 @@ class Cuadrado(Figura):
         return intersecciones % 2 == 1
     
     def coordenadas_escaladas(self):
-        # """
-        # Calcula y devuelve las coordenadas escaladas de la figura en función del factor de escala.
-        # La función escala la figura alrededor del punto superior izquierdo, es decir, el punto con la
-        # coordenada x más pequeña y la coordenada y más pequeña.
-
-        # :return: Las 8 coordenadas escaladas de la figura.
-        # """
-        x1, y1, x2, y2, x3, y3, x4, y4 = self.x1, self.y1, self.x2, self.y2, self.x3, self.y3, self.x4, self.y4
-
-        # Identifica el punto superior izquierdo (el que tiene la coordenada x más pequeña y la coordenada y más pequeña)
-        puntos = np.array([[x1, y1], [x2, y2], [x3, y3], [x4, y4]])
+        # Identifica el punto superior izquierdo 
+        puntos = np.array([[self.x1, self.y1], 
+                           [self.x2, self.y2], 
+                           [self.x3, self.y3], 
+                           [self.x4, self.y4]])
         punto_superior_izquierdo = np.argmin(puntos, axis=0)[0]
 
         # Calcula la matriz de escalado
-        escala_matriz = np.array([[self.escala, 0], [0, self.escala]])
+        escala_matriz = np.array([[self.escala, 0], 
+                                  [0, self.escala]])
 
-        # Escala las coordenadas
-        puntos_escalados = puntos - puntos[punto_superior_izquierdo]  # Resta el punto superior izquierdo
-        puntos_escalados = np.dot(puntos_escalados, escala_matriz)    # Multiplica por la matriz de escalado
-        puntos_escalados = puntos_escalados + puntos[punto_superior_izquierdo]  # Suma el punto superior izquierdo
+        # Resta el punto superior izquierdo
+        puntos_escalados = puntos - puntos[punto_superior_izquierdo]  
+        # Multiplica por la matriz de escalado
+        puntos_escalados = np.dot(puntos_escalados, escala_matriz)    
+        # Suma el punto superior izquierdo
+        puntos_escalados = puntos_escalados + puntos[punto_superior_izquierdo]  
 
         # Redondea las coordenadas escaladas
         puntos_escalados = np.round(puntos_escalados / 10) * 10
@@ -305,7 +365,10 @@ class Cuadrado(Figura):
         x2_escalado, y2_escalado = puntos_escalados[1]
         x3_escalado, y3_escalado = puntos_escalados[2]
         x4_escalado, y4_escalado = puntos_escalados[3]
-        return x1_escalado, y1_escalado, x2_escalado, y2_escalado, x3_escalado, y3_escalado, x4_escalado, y4_escalado
+        return (x1_escalado, y1_escalado, x2_escalado, y2_escalado, 
+                x3_escalado, y3_escalado, x4_escalado, y4_escalado)
+    
+    
     
     def puntos_rotados(self, x1, y1, x2, y2, x3, y3, x4, y4):
         # """
@@ -398,20 +461,15 @@ class Triangulo(Figura):
         self.escala = 1
     
     def coordenadas_escaladas(self):
-        # """
-        # Calcula las coordenadas escaladas del triángulo, manteniendo la proporción
-        # original y escalándolo desde el punto superior (el vértice con la coordenada y más pequeña).
-
-        # :return: Seis coordenadas escaladas (x1_escalado, y1_escalado, x2_escalado, y2_escalado, x3_escalado, y3_escalado).
-        # """
-        x1, y1, x2, y2, x3, y3 = self.x1, self.y1, self.x2, self.y2, self.x3, self.y3
-
-        # Identifica el punto superior (el que tiene la coordenada y más pequeña)
-        puntos = np.array([[x1, y1], [x2, y2], [x3, y3]])
+        # Identifica el punto superior
+        puntos = np.array([[self.x1, self.y1], 
+                           [self.x2, self.y2], 
+                           [self.x3, self.y3]])
         punto_superior = np.argmin(puntos, axis=0)[1]
 
         # Calcula la matriz de escalado
-        escala_matriz = np.array([[self.escala, 0], [0, self.escala]])
+        escala_matriz = np.array([[self.escala, 0], 
+                                  [0, self.escala]])
 
         # Escala las coordenadas
         puntos_escalados = puntos - puntos[punto_superior]
@@ -425,7 +483,8 @@ class Triangulo(Figura):
         x1_escalado, y1_escalado = puntos_escalados[0]
         x2_escalado, y2_escalado = puntos_escalados[1]
         x3_escalado, y3_escalado = puntos_escalados[2]
-        return x1_escalado, y1_escalado, x2_escalado, y2_escalado, x3_escalado, y3_escalado
+        return (x1_escalado, y1_escalado, x2_escalado, 
+                y2_escalado, x3_escalado, y3_escalado)
 
     def puntos_rotados(self, x1, y1, x2, y2, x3, y3):
         # """
@@ -467,12 +526,6 @@ class Triangulo(Figura):
         return x1_rotado, y1_rotado, x2_rotado, y2_rotado, x3_rotado, y3_rotado
 
     def punto_medio_triangulo(x1, y1, x2, y2, x3, y3):
-        # """
-        # Calcula el punto medio (baricentro) de un triángulo con vértices (x1, y1), (x2, y2) y (x3, y3).
-        # El punto medio es el promedio de las coordenadas x e y de los vértices del triángulo.
-        
-        # :return: Tupla con las coordenadas x e y del punto medio del triángulo.
-        # """
         # Calcular el promedio de las coordenadas x de los vértices
         x_medio = (x1 + x2 + x3) / 3
 
@@ -522,17 +575,29 @@ class Triangulo(Figura):
         super().imprimir_atributos()
         
     def colorear(self, canvas):
-        # """
-        # Colorea el interior del triángulo utilizando el algoritmo de flood fill.
-
-        # :param canvas: Objeto canvas donde se dibuja el triángulo.
-        # """
-        # Escalar los vértices del triángulo
-        x1_escalado, y1_escalado, x2_escalado, y2_escalado, x3_escalado, y3_escalado = self.coordenadas_escaladas()
         # Calcular el punto medio del triángulo
-        semilla_x, semilla_y = Triangulo.punto_medio_triangulo(x1_escalado, y1_escalado, x2_escalado, y2_escalado, x3_escalado, y3_escalado)
+        semilla_x, semilla_y = Triangulo.punto_medio_triangulo(self.x1, self.y1, self.x2, self.y2, self.x3, self.y3)
         # Llamar al algoritmo de flood fill
-        flood_fill_puntos(canvas, round(semilla_x/10)*10, round(semilla_y/10)*10, self.color)#cambio
+        flood_fill_puntos(canvas, round(semilla_x/10)*10, round(semilla_y/10)*10, self.color)
+
+
+
+
+
+    
+    # def colorear(self, canvas):
+    #     # """
+    #     # Colorea el interior del triángulo utilizando el algoritmo de flood fill.
+
+    #     # :param canvas: Objeto canvas donde se dibuja el triángulo.
+    #     # """
+    #     # Escalar los vértices del triángulo
+    #     x1_escalado, y1_escalado, x2_escalado, y2_escalado, x3_escalado, y3_escalado = self.coordenadas_escaladas()
+    #     # Calcular el punto medio del triángulo
+    #     semilla_x, semilla_y = Triangulo.punto_medio_triangulo(x1_escalado, y1_escalado, x2_escalado, y2_escalado, x3_escalado, y3_escalado)
+    #     # Llamar al algoritmo de flood fill
+    #     flood_fill_puntos(canvas, round(semilla_x/10)*10, round(semilla_y/10)*10, self.color)#cambio
+
 
 class Circunferencia(Figura):
     # """
@@ -667,7 +732,9 @@ class FigurasCanvas(tk.Canvas):
             for punto in puntos_circunferencia:
                 x, y = punto
                 self.create_rectangle(x, y, x+10, y+10, width= grosor, outline="Black", fill="black")
-            
+                # x, y, color = punto
+                # self.create_rectangle(x, y, x+10, y+10, width=grosor, outline=color, fill=color)
+
             figura.colorear(self)
             
         elif isinstance(figura, Triangulo):
@@ -966,8 +1033,8 @@ class Aplicacion(tk.Tk):
         self.configure(bg="#d9dee2")
         # Centrar la ventana y hacerla no redimensionable
         # Centrar ventana y hacerla no redimensionable
-        w = 1300
-        h = 500
+        w = 1166
+        h = 600
         sw = self.winfo_screenwidth()
         sh = self.winfo_screenheight()
         x = (sw - w) // 2
@@ -975,7 +1042,7 @@ class Aplicacion(tk.Tk):
         self.geometry('{}x{}+{}+{}'.format(w, h, x, y))
         self.resizable(False, False)
 
-        self.canvas = FigurasCanvas(self, width=1000, height=500)
+        self.canvas = FigurasCanvas(self, width=1000, height=600)
         self.canvas.configure(bg="white", highlightthickness=0)
         self.canvas.pack(side=tk.RIGHT)
 
@@ -1008,15 +1075,38 @@ class Aplicacion(tk.Tk):
         self.boton_mover.configure(bg=col2)
         self.boton_mover.configure(fg="white")
         
-        self.frame_color = tk.Frame(self.frame_controles)
-        self.frame_color.pack(side=tk.LEFT, padx=5, pady=5)
+        # self.frame_color = tk.Frame(self.frame_controles)
+        # self.frame_color.pack(side=tk.LEFT, padx=5, pady=5)
+        # self.frame_color.configure(bg=bg1)
+
+        # # Configuración de la sección de selección de color
+        # self.label_color = tk.Label(self.frame_color, text="Color de Figura", font=("Arial", 10, "bold"), bg="#EFEFEF", fg=col2)
+        # self.label_color.grid(row=2, column=0, sticky="W", padx=5, pady=7)
+        # self.label_color.configure(bg=bg1)
+        
+        # # Creación del widget de selección de color
+        # self.color_var = tk.StringVar()
+        # self.seleccion_color = ttk.Combobox(self.frame_color, textvariable=self.color_var, state='readonly', width=14)
+        # self.seleccion_color['values'] = ('Black', 'Red', 'Green', 'Blue', 'Yellow', 'Orange')
+        # self.seleccion_color.current(0)
+        # self.seleccion_color.grid(row=1, column=0, sticky="W", padx=5, pady=0)
+        # # Cambio de color de la figura seleccionada al seleccionar un nuevo color en el ComboBox
+        # self.seleccion_color.bind("<<ComboboxSelected>>", self.cambiar_color_figura_seleccionada)
+        # WILLIAM1
+        # Creación del marco separado para la selección de color
+        self.frame_color_separado = tk.Frame(self.frame_controles)
+        self.frame_color_separado.pack(side=tk.TOP, padx=5, pady=5)
+        self.frame_color_separado.configure(bg=bg1)
+
+        self.frame_color = tk.Frame(self.frame_color_separado)
+        self.frame_color.pack(side=tk.TOP, padx=5, pady=5)
         self.frame_color.configure(bg=bg1)
 
         # Configuración de la sección de selección de color
         self.label_color = tk.Label(self.frame_color, text="Color de Figura", font=("Arial", 10, "bold"), bg="#EFEFEF", fg=col2)
         self.label_color.grid(row=2, column=0, sticky="W", padx=5, pady=7)
         self.label_color.configure(bg=bg1)
-        
+
         # Creación del widget de selección de color
         self.color_var = tk.StringVar()
         self.seleccion_color = ttk.Combobox(self.frame_color, textvariable=self.color_var, state='readonly', width=14)
@@ -1025,6 +1115,10 @@ class Aplicacion(tk.Tk):
         self.seleccion_color.grid(row=1, column=0, sticky="W", padx=5, pady=0)
         # Cambio de color de la figura seleccionada al seleccionar un nuevo color en el ComboBox
         self.seleccion_color.bind("<<ComboboxSelected>>", self.cambiar_color_figura_seleccionada)
+
+
+        #####################
+        
         
         # Creación del frame para controlar la escala
         self.frame_escala = tk.Frame(self.frame_controles)
@@ -1097,7 +1191,7 @@ class Aplicacion(tk.Tk):
         self.frame_linea = tk.Frame(self.frame_controles)
         self.frame_linea.pack(side=tk.TOP, padx=5, pady=5)
         self.frame_linea.configure(bg=bg1)
-
+        # WILLIAM2    
         self.boton_solido = tk.Button(self.frame_linea, text="Sólido",font=("Arial", 8, "bold"), command=self.cambiar_a_solido, width=11, height=1)
         self.boton_solido.grid(row=0, column=0, padx=0, pady=2)
         self.boton_solido.configure(bg=col2)
@@ -1163,22 +1257,6 @@ class Aplicacion(tk.Tk):
         if fig is not None:
             self.canvas.rotar_figura(fig.get_rotacion() - 15)            
           
-    def escalar(self):
-        # """
-        # Escala la figura seleccionada en el canvas usando el factor de escala ingresado.
-        # Borra y vuelve a dibujar todas las figuras en el canvas para reflejar los cambios.
-
-        # Lanza un error si el valor ingresado no es numérico.
-        # """
-        if self.canvas.figura_seleccionada is not None:
-            try:
-                factor = float(self.escala_var.get())
-                self.canvas.figura_seleccionada.escalar(factor)
-                self.canvas.delete("all")
-                for figura in self.canvas.figuras:
-                    self.canvas.dibujar_figura(figura)
-            except ValueError:
-                messagebox.showerror("Error", "Ingrese un valor numérico válido.")
 
     def cambiar_a_solido(self):
         # """
@@ -1214,18 +1292,28 @@ class Aplicacion(tk.Tk):
             ancho_borde = fig.get_border_thickness()
             ancho_borde += 2
             self.canvas.modificar_grosor_bordes(ancho_borde)
-
+    
+    # def disminuir_ancho_bordes(self):
+        # # """
+        # # Decremente en un pixel el ancho de los bordes
+        # # luego lo borra y redibuja con el metodo modificar grosor bordes
+        # # """
+        # fig = self.canvas.figura_seleccionada
+        # if fig is not None:
+        #     ancho_borde = fig.get_border_thickness()
+        #     print(ancho_borde)
+        #     ancho_borde -= 2
+        #     self.canvas.modificar_grosor_bordes(ancho_borde)
     def disminuir_ancho_bordes(self):
-        # """
-        # Decremente en un pixel el ancho de los bordes
-        # luego lo borra y redibuja con el metodo modificar grosor bordes
-        # """
+        min_border_thickness = 4
         fig = self.canvas.figura_seleccionada
         if fig is not None:
             ancho_borde = fig.get_border_thickness()
-            ancho_borde -= 2
-            self.canvas.modificar_grosor_bordes(ancho_borde)
-
+            nuevo_ancho_borde = ancho_borde - 2
+            if nuevo_ancho_borde >= min_border_thickness:
+                self.canvas.modificar_grosor_bordes(nuevo_ancho_borde)
+        
+        
     def mover_arriba(self):
         # """
         # Mueve la figura seleccionada en el canvas hacia arriba en 80 unidades.
